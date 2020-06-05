@@ -234,8 +234,21 @@ Build the image with the `skaffold run -t <TAG>` command:
     skaffold run -t $TAG
 
 ### Deploy App Engine
+WIP
 
-TBD
+Enable the App Engine APIs first.
+```
+gcloud services enable appengine.googleapis.com
+```
+
+Initialize App Engine.
+```
+gcloud app create
+```
+
+```
+gcloud deployment-manager deployments create test-deployment  --config app-engine-deployment.yaml
+```
 
 ## Delete Deployment
 TODO - should we provide steps or a script to delete all the assets after they have been deployed?
