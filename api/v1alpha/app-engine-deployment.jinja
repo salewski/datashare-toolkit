@@ -21,7 +21,7 @@ resources:
     appsId: {{ env["project"] }}
     deployment:
       zip:
-        sourceUrl: https://storage.googleapis.com/fsi-cds-markeplace-sw-dev-datashare-install/cds-api.zip
+        sourceUrl: https://storage.googleapis.com/{{ env["project"] }}-datashare-install/cds-api.zip
     handlers:
       - script:
           scriptPath: auto
