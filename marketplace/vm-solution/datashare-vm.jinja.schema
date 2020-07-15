@@ -127,6 +127,13 @@ properties:
   input_gkeZone:
     type: string
     default: us-central1-a
+  input_useCustomGkeDomain:
+    type: boolean
+    default: False
+  input_gkeCustomDomain:
+    type: string
+    default: mycustom.domain.com
+
 outputs:
   deployment:
     type: string
