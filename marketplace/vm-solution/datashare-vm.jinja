@@ -17,6 +17,8 @@ imports:
 {% set gkeClusterName = "datashare" %}
 {% set waiterName = env["deployment"] + "-startup-waiter" %}
 {% set configName = env["deployment"] + "-startup-config" %}
+{% set useCustomGkeDomain = properties["input_useCustomGkeDomain"] %}
+{% set gkeCustomDomain = properties["input_gkeCustomDomain"] %}
 
 {% set deployment = env["deployment"] %}
 {% set name = "%s-vm-tmpl" % env["name"] %}
@@ -102,6 +104,8 @@ resources:
       waiterName: {{ waiterName }}
       deployToGke: {{ deployApiToGke }}
       gkeZone: {{ gkeZone }}
+      useCustomGkeDomain: {{ useCustomGkeDomain }}
+      gkeCustomDomain: {{ gkeCustomDomain }}
     
   ## Deploy Datashare UI
   - name: build-ui
