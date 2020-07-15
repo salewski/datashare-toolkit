@@ -68,6 +68,16 @@ properties:
     type: string
     description: The GKE zone to which API shoudl be deployed.
     default: us-central1-a  
+  
+  useCustomGkeDomain:
+    type: boolean
+    description: Apply a custom domain name for the GKE cluster
+    default: False
+
+  gkeCustomDomain:
+    type: string
+    description: The custom domain to be applied to the GKE cluster. You must own the domain and subdomain. 
+    default: mycustomer.domain.com  
 
 outputs:
   properties:

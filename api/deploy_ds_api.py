@@ -92,7 +92,31 @@ def GenerateConfig(context):
                     '--service-account=' + context.properties['serviceAccountName']
                     ]
 
-
+  # Apply the custom domain name to the cluster if one is provided
+  
+  if (context.properties['useCustomGkeDomain'] == True) and context.properties['gkeCustomDomain'] != None and context.properties['gkeCustomDomain'] != "":
+    steps.append({   # create the domain name mapping
+                  'name': 'gcr.io/cloud-builders/gcloud',
+                  'dir': 'ds/datashare-toolkit',
+                  'args': [ 'beta',
+                            'run',
+                            'domain-mappings',
+                            'create',
+                            '--service=' + context.properties['cloudRunDeployName'], 
+                            '--domain=' + context.properties['gkeCustomDomain'],
+                            '--cluster=' + cluster_name,
+                            '--cluster-location=' + cluster_location,
+                            '--namespace=' + namespace, 
+                            '--platform=gke'
+                          ]
+              })
+    steps.append({   # Enable TLS on domain
+                  'name': 'gcr.io/google.com/cloudsdktool/cloud-sdk',
+                  'dir': 'ds/datashare-toolkit',
+                  'entrypoint': '/bin/bash',
+                  'args': ['-c', 'gcloud container clusters get-credentials datashare --zone ' + cluster_location + ' && kubectl patch cm config-domainmapping -n knative-serving -p \'{"data":{"autoTLS":"Enabled"}}\'']
+              })
+  
   gitRelease = { # Checkout the correct release
                 'name': 'gcr.io/cloud-builders/git',
                 'dir': 'ds/datashare-toolkit', # changes the working directory to /workspace/ds/datashare-toolkit
