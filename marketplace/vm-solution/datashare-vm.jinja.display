@@ -127,6 +127,14 @@ input:
       tooltip: This will create the GKE cluster in the specified zone; default zone is us-central1-a
       subtext: Create the GKE cluster in the specified zone;
       placeholder: us-central1-a
+    - name: input_useCustomGkeDomain
+      title: Use a custom GKE domain name
+      tooltip: This includes the custom domain name in your GKE cluster for the Datashare API. You must own the top level domain and/or subdomain. If this is unchecked, then the API will be deployed as <service>.<namespace>.<domain> (ds-api.datashare-apis.example.com).
+      subtext: Apply the custom domain below to your GKE cluster.
+    - name: input_gkeCustomDomain
+      title: GKE custom domain
+      tooltip: This domain will be applied to your GKE cluster and it will enable TLS. It is only applied if the checkbox above is selected.
+      subtext: Applies the custom domain listed in this textbox to your GKE cluster. You must own the top level domain and/or subdomain.  
     
   sections:
     - name: BOOT_DISK
@@ -167,30 +175,72 @@ runtime:
       description: You must configure Firebase. <a href="https://github.com/GoogleCloudPlatform/datashare-toolkit/tree/master/frontend#new-firebase-setup">Follow these instructions.</a>
     - heading: Remove roles from Service Accounts
       description: <a href="https://github.com/GoogleCloudPlatform/datashare-toolkit/tree/master/marketplace/README.md#remove-elevated-service-account-permissions">Remove elevated permissions from Cloud Build and Deployment Manager</a>
+    - heading: Get Kubectl credentials
+      description: Get kubectl credentials.
+      showIf: '{{ properties().input_deployApiToGke }}'
+      snippet: >-
+        gcloud container clusters get-credentials datashare --zone {{ properties().input_gkeZone }}
+
     - heading: Datashare API Deployed to Cloud Run managed by GKE
       description: Confirm Datashare deployment, pod and service is running on GKE. Execute the following commands from Cloud Shell.
       showIf: '{{ properties().input_deployApiToGke }}'
       snippet: >-
-        gcloud container clusters get-credentials datashare --zone {{ properties().input_gkeZone }}
         kubectl get gw,deploy,po,svc -n datashare-apis
+
     - heading: Datashare API Service in GKE
       description: Display the Datashare UI domain name. Execute the following commands from Cloud Shell.
       showIf: '{{ properties().input_deployApiToGke }}'
       snippet: >-
-        gcloud container clusters get-credentials datashare --zone {{ properties().input_gkeZone }}
-        gcloud run services describe ds-api --cluster datashare --cluster-location {{ properties().input_gkeZone }}   --namespace datashare-apis   --platform gke
-    - heading: Send Curl request to Datashare API
-      description: Execute the following commands from Cloud Shell.
+        gcloud run services describe ds-api --cluster datashare --cluster-location {{ properties().input_gkeZone }} --namespace datashare-apis --platform gke
+
+    - heading: Get the Datashare IP address
+      description: Execute the following command from Cloud Shell.
       showIf: '{{ properties().input_deployApiToGke }}'
       snippet: >-
-        gcloud container clusters get-credentials datashare --zone {{ properties().input_gkeZone }}
         GATEWAY_IP=`kubectl -n gke-system get svc istio-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}'`; echo $GATEWAY_IP
-        curl -i -H "Host: ds-api.datashare-apis.example.com" ${GATEWAY_IP}/v1alpha       
+
+    - heading: If you did not use a custom GKE Domain...
+      description: Execute the following commands if you did NOT use a custom GKE domain.
+
+    - heading: Test the Datashare API
+      description: Execute the following commands from Cloud Shell.  This confirms that the API is running.
+      showIf: '{{ properties().input_deployApiToGke }}'
+      snippet: >-
+        curl -i -H "Host: ds-api.datashare-apis.example.com" ${GATEWAY_IP}/v1alpha
+
+    - heading: Test access to the Datashare API datasets
+      description: Execute the following commands from Cloud Shell. This confirms the UI will be able to access the API.
+      showIf: '{{ properties().input_deployApiToGke }}'
+      snippet: >-
         curl -i -H "Host: ds-api.datashare-apis.example.com" ${GATEWAY_IP}/v1alpha/projects/gcp-financial-services-dev/datasets
+    
+    - heading: If you used a custom GKE Domain...
+      description: Execute the following commands if you used a GKE custom domain.
+      showIf: '{{ properties().input_useCustomGkeDomain }}'
+
+    - heading: Did you use a custom GKE domain?
+      description: You should reserve a static IP address for the custom GKE domain. Execute the following command from Cloud Shell. Make sure to replace YOUR_GKE_REGION with the REGION in which your GKE cluster is deployed.
+      showIf: '{{ properties().input_useCustomGkeDomain }}'
+      snippet: >-
+        gcloud compute addresses create ds-api-static-ip --addresses $GATEWAY_IP --region YOUR_GKE_REGION
+
+    - heading: Test the Datashare API GKE custom domain
+      description: Execute the following commands from Cloud Shell, if you selected the GKE custom domain.  This confirms that the API is running.
+      showIf: '{{ properties().input_useCustomGkeDomain }}'
+      snippet: >-
+        curl -i https://{{ properties().input_gkeCustomDomain }}/v1alpha
+
+    - heading: Test access to the Datashare API datasets GKE custom domain
+      description: Execute the following commands from Cloud Shell, if you selected the GKE custom domain. This confirms the UI will be able to access the API.
+      showIf: '{{ properties().input_useCustomGkeDomain }}'
+      snippet: >-
+        curl -i https://{{ properties().input_gkeCustomDomain }}/v1alpha/projects/gcp-financial-services-dev/datasets
+
     - heading: Do you want to delete the Datashare solution?
       description: The best way to delete the Datashare solution is by following this <a href="https://github.com/GoogleCloudPlatform/datashare-toolkit/tree/master/marketplace#delete-vm-solution-components-from-gcpsh">documentation.</a>
+
     - heading: Deployed with RuntimeConfig beta
-      description: Datashare was deployed using the Google Cloud Platform RuntimeConfig beta release to install dependencies.
+      description: Datashare dependencies were deployed using the Google Cloud Platform RuntimeConfig beta release.
       showIf: '{{ properties().input_useRuntimeConfigWaiter }}'
     #- heading: Remove Project Owner role from Compute Engine Service account
     #  description: Remove the Project Owner role from the compute engine service account in <a href="https://cloud.google.com/shell">Cloud Shell</a>.
