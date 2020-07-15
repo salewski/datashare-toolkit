@@ -82,4 +82,7 @@ gcloud projects remove-iam-policy-binding $(gcloud config get-value project) --m
 # Remove cloud build service account from Compute Engine service account
 gcloud projects remove-iam-policy-binding $(gcloud config get-value project) --member="serviceAccount:$PROJECT_NUMBER-compute@developer.gserviceaccount.com" --role="roles/container.admin"
 
+echo "Deleting the static IP from GCP"
+gcloud compute addresses delete ds-api-static-ip --region=us-central1 --quiet
+
 # gcloud beta runtime-config configs waiters create [WAITER_NAME] --config-name [CONFIG_NAME]
